@@ -1,0 +1,311 @@
+# 07 / 06 / 2022 - VNC XULETÓN RÁPIDO
+
+# TigerVNC
+
+VERSIÓN FINAL (USANDO ENTORNO GRÁFICO “XFCE”)
+
+https://bytexd.com/how-to-install-configure-vnc-server-on-ubuntu/  → EXTRAÍDO DE AQUÍ
+
+1. sudo apt update
+
+2. sudo apt install xfce4 xfce4-goodies → PRE INSTALACIÓN DE XFCE
+
+3. sudo apt install tigervnc-standalone-server tigervnc-common tigervnc-viewer
+
+4. vncserver → PONER CONTRASEÑA DE VNC (1era vez) - Para cambiarlo “vncpasswd” (Para cada user)
+
+5. vncserver -kill :1 → Matar el proceso de VNC
+
+6. nano ~/.vnc/xstartup → Introduciremos el SCRIPT del “environment” de XFCE
+
+```
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/startxfce4
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+```
+
+7. chmod +x ~/.vnc/xstartup
+
+8. vncserver -localhost no :1 → LOCALHOST NO PUEDE ENTRAR
+
+9. sudo iptables -A INPUT -p tcp –dport 5901 -j ACCEPT → 
+ESTE ES IMPORTANTE YA QUE SINO EL FIREWALL BLOQUEARÁ LA CONEXIÓN ENTRANTE DE VNCVIEWER.
+
+
+Why we used -localhost no
+By default, TigerVNC accepts connection only from 127.0.0.1 or localhost, for security reasons. Since we’re just testing now, we added -localhost no to be able to access the server via VNC from the outside.
+
+We’ll cover this in a little bit more detail further in this article.
+
+10. INSTALAR VNC VIEWER EN UN CLIENTE WINDOWS O DEBIAN.
+
+LINUX: apt-get install tigervnc-viewer
+
+WINDOWs: VNC-VIEWER desde GOOGLE.
+
+11. PONER - IP_MAQUINA:1 O IP_MAQUINA:5901
+
+##########################
+TUNEL SSH - VNC
+##########################
+
+1. vncserver
+
+New 'keshi:1 (ubuntu)' desktop at :1 on machine keshi
+
+Starting applications specified in /home/ubuntu/.vnc/xstartup
+Log file is /home/ubuntu/.vnc/keshi:1.log
+
+Use xtigervncviewer -SecurityTypes VncAuth -passwd /home/ubuntu/.vnc/passwd :1 to connect to the VNC server.
+
+
+2. vncserver -list
+
+TigerVNC server sessions:
+
+X DISPLAY #	RFB PORT #	PROCESS ID
+:1		5901		2844
+
+3. PROVA
+
+PROVA: 
+- vncviewer localhost:1
+- vncviewer localhost:5901
+
+
+###
+TUNEL SSH - DE FORMA LOCAL // TUNEL SSH VNC REMOT NO FUNCIONA BÉ
+###
+
+INTERACTIVE (Posar la passwd - Es queda penjat - pero OK)
+ssh -L 59000:localhost:5901 -C -N -l ubuntu 192.168.0.36
+
+FOREGROUND (En background)
+ssh -L 59000:localhost:5901 -f -C -N -l ubuntu 192.168.0.36
+
+ACCESO - DESDE EL MISMO CLIENTE
+vncviewer localhost:59000 → SE ABRE
+
+
+
+######################
+COMPROBAR CONECTIVIDAD
+######################
+
+nmap localhost --> VER PUERTOS
+
+ps ax | grep vnc --> VER PROCESO DE VNC
+
+   3911 pts/0    S      0:00 /usr/bin/Xtigervnc :1 -desktop keshi:1 (ubuntu) -auth /run/user/1000/gdm/Xauthority -geometry 1900x1200 -depth 24 -rfbwait 30000 -rfbauth /home/ubuntu/.vnc/passwd -rfbport 5901 -pn -localhost -SecurityTypes VncAuth
+
+
+
+netstat -a | grep 59000 --> Print network connections, routing tables, interface statistics, masquerade connections, and multicast memberships
+
+tcp        0      0 localhost:59000         0.0.0.0:*               LISTEN     
+tcp6       0      0 ip6-localhost:59000     [::]:*                  LISTEN  
+
+DE VEGADES ES QUEDA PENJAT EL “PORT” SOL: 
+fuser -n tcp 59000
+kill -9 PID-59000
+
+sudo netstat -a | grep 5901
+
+
+############################
+Setting up the VNC as a system service // USUARIO isx36579183 - SI ES OTRO USUARIO HAY QUE INICIAR SESIÓN GRAFICO
+############################
+
+IMPORTANTE - HAY QUE INICIAR SESIÓN GRÁFICAMENTE CON CADA USUARIO - DE LO CONTRARIO NO FUNCIONARÁ
+
+sudo nano /etc/systemd/system/vncserver-isx36579183@.service
+
+```
+[Unit]
+Description=Start TigerVNC server at startup
+After=syslog.target network.target
+[Service]
+Type=forking
+User=isx36579183
+Group=GROUP_OF_ISX36579183
+WorkingDirectory=/home/PATH_TO_ISX36579183
+PIDFile=/home/PATH_TO_ISX36579183/.vnc/%H:%i.pid
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStart=/usr/bin/vncserver -depth 24 -geometry 1280x800 -localhost :%i
+ExecStop=/usr/bin/vncserver -kill :%i
+[Install]
+WantedBy=multi-user.target
+
+```
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable vncserver-isx36579183@1
+
+sudo systemctl start vncserver-isx36579183@1
+
+sudo systemctl status vncserver-isx36579183@1
+
+
+----
+
+PROBARLO ----> 
+
+vncviewer i11:1
+
+vncviewer i11:5901
+
+
+##########################################################################################
+
+INSTALAR OTRO ENTORNO GRÁFICO - VIEWER DESKTOP
+
+##########################################################################################
+
+SÓLAMENTE HAY QUE MODIFICAR EL FICHERO ~/.VNC/XSTARTUP
+
+GNOME
+
+sudo apt install gnome-session gnome-terminal
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/gnome-session
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+XFCE
+
+sudo apt install xfce4 xfce4-goodies
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/startxfce4
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+
+
+LXQT
+
+sudo apt install lxqt
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/startlxqt
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+
+
+
+UBUNTU-MATE-DESKTOP
+
+sudo apt install ubuntu-mate-desktop
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/mate-session
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+
+
+LXDE
+
+sudo apt install lxde
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/startlxde
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+
+
+BUDGIE (NO FUNC MUY BIEN)
+
+sudo apt install ubuntu-budgie-desktop
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/budgie-session
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+
+
+
+
+
+KDE Plasma Desktop
+
+sudo apt install kde-plasma-desktop
+
+nano ~/.vnc/xstartup
+
+#!/bin/sh
+# Start up the standard system desktop
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+/usr/bin/startplasma-x11
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+x-window-manager &
+
+############################################################################################
+
+https://rm-rf.es/instalar-y-configurar-tigervnc-server-y-utilizarlo-con-un-tunel-ssh/ 
+
+
+Desde fuera no, por motivos de seguridad. Para ello vamos a crear un tunel SSH de modo que las conexiones VNC con el exterior sí que estén cifradas. Vamos a usar por ejemplo el puerto 6922 para el tunel. El servidor VNC se encuentra en la IP 10.0.0.100, desde el equipo remoto con el que queremos conectar al servidor creamos el tunel:
+
+$ ssh alex@10.0.0.100 -L 6922:10.0.0.100:5901 -N
+Y ya está, podemos acceder remotamente al servidor VNC de forma segura con el nuevo puerto:
+
+$ vncviewer localhost:6922
+Si queréis usar el estandar podéis mantener los puertos de VNC:
+
+$ ssh alex@10.0.0.100 -L 5901:10.0.0.100:5901 -N
+$ vncviewer localhost:1
+

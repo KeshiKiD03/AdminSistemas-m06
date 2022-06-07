@@ -1,0 +1,863 @@
+# 07 / 06 / 2022 - RSYNC XULETÓN RÁPIDO
+
+##### COMBINACIONES ######
+
+-a --> ARCHIVE SIN VERBOSE NI PROGRESS
+
+-avP --> ARCHIVE + CON VERBOSE + PROGRESS
+
+-avhP --> ARCHIVE + VERBOSE + PROGRESS + HUMAN READABLE
+
+-az --> ARCHIVE + COMPRIME TRANSFERENCIA
+
+-avzP --> COMPRIME TRANSFERENCIA + CON VERBOSE + PROGRESS
+
+-avzhP --> COMPRIME TRANSFERENCIA + VERBOSE + PROGRESS + HUMAN READABLE
+
+-r --> RECURSIVE
+
+--delete --> ELIMINA EL DESTINO/ORIGEN SI ORIGEN/ORIGEN NO EXISTE
+
+--include --> INCLUYE AL DESTINO/ORIGEN
+
+--exclude --> EXCLUYE AL DESTINO/ORIGEN
+
+-n // --dry-run --> SIMULACIÓN
+
+-an --> --dry-run --> SIMULACIÓN + ARCHIVE SIN VERBOSE NI PROGRESS
+
+-anvP --> --dry-run --> SIMULACIÓN + ARCHIVE + CON VERBOSE + PROGRESS
+
+-anvzP --> --dry-run --> SIMULACIÓN + ARCHIVE + CON VERBOSE + PROGRESS
+
+-anvhP --> --dry-run --> SIMULACIÓN + ARCHIVE + VERBOSE + PROGRESS + HUMAN READABLE
+
+-r -l -o -g -t -p -D --> rsync -rlptgoD --> RECURSIVE + SYMLINKS + OWNER + GROUP + TIME + DEVICES = -a
+
+-vv --> INCREMENTA VERBOSE
+
+##### COMANDOS BÁSICOS DE RSYNC #####
+
+rsync -avP <path_local> <user@host_remot:<path_Absoluta/Relativa(Solo$HOME)>> --> PUSH - VERBOSE + PROGRESS
+
+rsync -avP <user@host_remot:<path_Absoluta/Relativa(Solo$HOME)>> <path_local> --> PULL - VERBOSE + PROGRESS
+
+rsync -av --progress <source> <dest> --> IDEM ANTERIOR
+
+rsync -avPh <source> <dest> --> IDEM ANTERIOR + HUMAN READABLE
+
+rsync -r <source> <dest> --> COPIA DE FORMA RECURSIVA - PERO SIN PERMISOS - GRUPOS - OWNER... ETC.
+
+IMPORTANTE EL USO DEL "/" EN EL 
+
+	"ORIGEN" --> 
+
+		SI NO SE PONE "dir" --> COPIA CONTENIDO + CARPETA "dir"
+
+		SI SE PONE "dir/" --> COPIA CONTENIDO
+
+rsync -avz <source> <dest> --> COPIA LOS FICHEROS COMPRIMIDOS
+
+rsync -a --> ENGLOBA -r -p -t -o -g -l... RECURSIVE - PERMISOS - TIME - OWNER - GROUP, SYMBOLIC LINKS ... --> ARCHIVE
+
+rsync -avP --exclude=PATTERN --include=PATTERN <source> <dest> --> INCLUYE O EXCLUYE EL "PATRÓN" DE FICHEROS / DIRECTORIOS INDICADOS.
+
+rsync -anv --> ENGLOBA -r -p -t -o -g ... RECURSIVE - PERMISOS - TIME - OWNER - GROUP ... --> ARCHIVE --> PERO ES UNA SIMULACIÓN!!! NO LO HACE DE VERDAD
+
+# OTROS
+
+rsync -avP --delete --backup --backup-dir=<path_DIR> <path_source> <path_dest> --> HARÁ UNA COPIA DE SEGURIDAD DE UN DIRECTORIO.
+
+-l --links --> COPIA SYMLINKS
+-o --owner --> COPIA OWNER
+-g --group --> COPIA GROUP
+-t --time --> COPIA MODIFIED TIME
+-h --> HUMAN READABLE
+-p --perms --> COPIA MODIFIED TIME
+-n --dry-ryn --> COPIA DE SIMULACIÓN
+-W --whole-file --> COPIA TODO
+--delete --> BORRA FICHEROS XTRAÑOS DEL DESTINO
+
+```
+     --delete-before         receiver deletes before transfer (default)
+     --delete-during         receiver deletes during xfer, not before
+     --delete-delay          find deletions during, delete after
+     --delete-after          receiver deletes after transfer, not before
+     --delete-excluded       also delete excluded files from dest dirs
+```
+
+ -z, --compress              compress file data during the transfer
+-v, --verbose               increase verbosity
+
+#######################################################################################################################
+############################	RSYNC	 ########################### @KESHI ###########################################
+#######################################################################################################################
+---------------------------------------------------------------------------------------------------
+
+### SIMPLE ###
+
+# LOCAL - LOCAL --> COPIA EL DIRECTORIO DIR1 + SU CONTENIDO A DIR2
+
+```
+rsync -av dir1 dir2
+
+```
+
+```
+OUTPUT
+
+ osboxes  ~  rsync -av dir1 dir2
+sending incremental file list
+dir1/
+dir1/file1
+dir1/file10
+dir1/file100
+dir1/file11
+dir1/file12
+dir1/file13
+dir1/file14
+dir1/file15
+
+```
+
+
+# LOCAL - LOCAL --> COPIA EL CONTENIDO DE DIR1/ SU CONTENIDO A DIR2
+
+```
+rsync -av dir1/ dir2
+
+```
+
+```
+OUTPUT 
+
+ osboxes  ~  rsync -av dir1/ dir2
+sending incremental file list
+./
+file1
+file10
+file100
+file11
+file12
+file13
+
+```
+
+
+# 1. Sincronizar contenido de DIR1 a DIR2 en LOCAL-LOCAL - Podremos usar -r (recursive)
+
+```
+rsync -r dir1/ dir2
+
+```
+
+
+# 2. Sincronizar contenido de DIR1 a DIR2 en LOCAL-LOCAL - Podremos usar -a (archive) --> 
+CONSERVA ENLACES SIMBÓLICOS (-l) , FICHEROS ESPECIALES Y DISPOSITIVO - TIEMPO DE MODIFICACIÓN (-t) - OWNER (-o) 
+- GROUP (-g) y PERMISOS ---> LO COPIA TODO  --> ES LA QUE MÁS SE USA.
+
+```
+rsync -r dir1/ dir2
+
+```
+# Tingueu en compte que hi ha una barra inclinada al final ( /) 
+al final del primer argument a la sintaxi de les dues ordres anteriors 
+i es destaquen aquí:
+
+```
+rsync -a dir1/ dir2
+
+```
+
+# Esta barra indica que se copiará el contenido de DIR1/ (No incluye el NOMBRE del directorio) - 
+Se coloca en DIR2. Sin la barra se crearía: ~/dir2/dir1/[files]
+Con la barra - ~/dir2/[files]
+
+
+
+# 3. USO DE -n / --dry-run --> SIMULACIÓN / EJECUTA RSYNC PERO SIN QUE SE GUARDE CAMBIOS / UNA PRUEBA
+-v --> VERBOSE --> -a --> ARCHIVE
+
+```
+rsync -anv dir1/ dir2
+
+```
+
+```
+Output
+sending incremental file list
+./
+file1
+file10
+file100
+file11
+file12
+file13
+file14
+file15
+file16
+file17
+file18
+. . .
+
+```
+
+
+```
+rsync -anv dir1 dir2
+
+```
+
+```
+Output
+sending incremental file list
+dir1/
+dir1/file1
+dir1/file10
+dir1/file100
+dir1/file11
+dir1/file12
+dir1/file13
+dir1/file14
+dir1/file15
+dir1/file16
+dir1/file17
+dir1/file18
+. . .
+
+```
+
+##############################################
+USO REMOTO DE RSYNC - USA SSH - DELTA:TRANSFER
+##############################################
+
+# 0. OPCIONAL - GENERAR CLAVES SSH Y COPIARLOS UNO AL OTRO - LAS CLAVES PUBLICAS.
+ssh-keygen
+
+ssh-copy-id user@maquina_remota
+
+
+
+######
+SOLUCIÓN ERROR RSYNC - CLEAN SHELL
+---------------
+ osboxes  ~  130  rsync -avP ./dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+protocol version mismatch -- is your shell clean?
+(see the rsync man page for an explanation)
+rsync error: protocol incompatibility (code 2) at compat.c(178) [sender=3.1.3]
+ osboxes  ~  2  sudo mv ~/.bashrc ~/._bashrc
+
+
+######
+
+
+#######################################################################################################################
+
+
+# 1. MÉTODO PUSH --> SINCRONIZA LOCAL a REMOTO.
+USA SSH - DELTA TRANSFER - 
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA EXISTE (RUTA ABSOLUTA) + VERBOSE + PROGRESO
+
+```
+rsync -avP ./dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA EXISTE (RUTA RELATIVA) + VERBOSE + PROGRESO
+
+```
+rsync -avP ./dir1/ osboxes@192.168.0.40:dir2/
+
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA NO EXISTE (RUTA ABSOLUTA) - TE CREA LA CARPETA + VERBOSE + PROGRESO
+
+
+```
+rsync -avP ./dir1/ osboxes@192.168.0.40:/home/osboxes/nuevo_directorio/
+
+```
+
+#######################################################################################################################
+
+# 2. MÉTODO PULL--> SINCRONIZA REMOTO a LOCAL.
+USA SSH - DELTA TRANSFER - 
+
+# DESCARGAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (DIR2) - CARPETA EXISTE (RUTA ABSOLUTA) + VERBOSE + PROGRESO
+
+```
+rsync -avP osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/
+```
+
+# DESCARGAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (DIR2) - CARPETA EXISTE (RUTA RELATIVA) + VERBOSE + PROGRESO
+
+```
+rsync -avP osboxes@192.168.0.40:dir1/ ~/dir2/
+
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (NUEVA_CARPETA)- CARPETA NO EXISTE (RUTA ABSOLUTA) - TE CREA LA CARPETA + VERBOSE + PROGRESO
+
+
+```
+rsync -avP osboxes@192.168.0.40:dir1/ ~/nueva_carpeta/
+
+```
+
+#######################################################################################################################
+
+# 3. COPIA + COMPRIMIR ARCHIVOS (LOCAL - REMOT) #### LOS HACE MÁS LIVIANOS - NO COMPRIME ARCHIVOS Y LOS METE EN .RAR - .TAR - .TAR.GZ - .ZIP
+
+```
+rsync -avzP ./dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+
+```
+
+
+#### PRUEBA CON AVZP
+cd ~/dir1
+
+dd if=/dev/zero of=disk.img bs=1k count=100K
+
+ osboxes  ~  rsync -avzP dir1/ dir2
+sending incremental file list
+./
+disk.img
+    104,857,600 100%  135.09MB/s    0:00:00 (xfr#1, to-chk=100/102)
+file1
+              0 100%    0.00kB/s    0:00:00 (xfr#2, to-chk=99/102)
+file10
+              0 100%    0.00kB/s    0:00:00 (xfr#3, to-chk=98/102)
+
+
+
+ osboxes  ~  rsync -avzP dir1/ dir2
+sending incremental file list
+
+sent 1,487 bytes  received 12 bytes  2,998.00 bytes/sec
+total size is 104,857,600  speedup is 69,951.70
+
+
+
+#### PRUEBA SIN Z --> AVP
+
+ osboxes  ~  rsync -avP dir1/ dir2
+sending incremental file list
+./
+disk.img
+    104,857,600 100%  265.17MB/s    0:00:00 (xfr#1, to-chk=100/102)
+
+
+
+#############
+
+# MÉTODO PUSH CON "Z" --> SINCRONIZA LOCAL a REMOTO.
+USA SSH - DELTA TRANSFER - 
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA EXISTE (RUTA ABSOLUTA) + VERBOSE + PROGRESO
+
+```
+rsync -avzP ./dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA EXISTE (RUTA RELATIVA) + VERBOSE + PROGRESO
+
+```
+rsync -avzP ./dir1/ osboxes@192.168.0.40:dir2/
+
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 a REMOTO - CARPETA NO EXISTE (RUTA ABSOLUTA) - TE CREA LA CARPETA + VERBOSE + PROGRESO
+
+
+```
+rsync -avzP ./dir1/ osboxes@192.168.0.40:/home/osboxes/nuevo_directorio/
+
+```
+
+# MÉTODO PULL CON "Z"--> SINCRONIZA REMOTO a LOCAL.
+USA SSH - DELTA TRANSFER - 
+
+# DESCARGAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (DIR2) - CARPETA EXISTE (RUTA ABSOLUTA) + VERBOSE + PROGRESO
+
+```
+rsync -avzP osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/
+```
+
+# DESCARGAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (DIR2) - CARPETA EXISTE (RUTA RELATIVA) + VERBOSE + PROGRESO
+
+```
+rsync -avzP osboxes@192.168.0.40:dir1/ ~/dir2/
+
+```
+
+# COPIAMOS/SINCRONIZAMOS CONT DE DIR1 (REMOTO) a LOCAL (NUEVA_CARPETA)- CARPETA NO EXISTE (RUTA ABSOLUTA) - TE CREA LA CARPETA + VERBOSE + PROGRESO
+
+
+```
+rsync -avzP osboxes@192.168.0.40:dir1/ ~/nueva_carpeta/
+
+```
+
+#############
+
+
+# 4. COPIA + COMPRIMIR ARCHIVOS (REMOT - LOCAL) #### LOS HACE MÁS LIVIANOS A LA HORA DE LA TRANSFERENCIA (SOLO LA TRANSFERENCIA DE ARCHIVOS) - NO COMPRIME ARCHIVOS Y LOS METE EN .RAR - .TAR - .TAR.GZ - .ZIP
+
+```
+rsync -avzP osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/ 
+
+```
+
+#### PRUEBA
+
+dd if=/dev/zero of=disk.img bs=1k count=100K
+
+
+.... IDEM AL ANTERIOR
+
+
+ osboxes  ~  rsync -avzP dir1/ dir2
+sending incremental file list
+
+sent 1,487 bytes  received 12 bytes  2,998.00 bytes/sec
+total size is 104,857,600  speedup is 69,951.70
+
+
+
+#### PRUEBA SIN Z --> AVP
+
+ osboxes  ~  rsync -avP dir1/ dir2
+sending incremental file list
+./
+disk.img
+    104,857,600 100%  265.17MB/s    0:00:00 (xfr#1, to-chk=100/102)
+
+
+#########################################################
+CONCLUSIÓN: COMPRIME LA TRANSFERENCIA DE DATOS SOLO!!!!!
+#########################################################
+
+#######################################################################################################################
+
+# 5. -n / --dry-run /// SIMULACIÓN - SIMULA LA COPIA QUE VAS A REALIZAR
+
+# LOCAL - LOCAL --> SIMULA LA COPIA EL DIRECTORIO DIR1 + SU CONTENIDO A DIR2
+
+```
+rsync -anv dir1 dir2
+
+```
+
+
+# LOCAL - LOCAL --> SIMULA LA COPIA DEL CONTENIDO DE DIR1 A DIR2
+
+```
+rsync -anv dir1/ dir2
+
+```
+
+# 6. --delete --> BORRA EN EL DESTINO - SI LO HAS BORRADO EN EL ORIGEN!!!
+
+Per mantenir dos directoris realment sincronitzats. 
+Cal esborrar fitxers del directori de DESTINACIÓN si s'eliminen de la FONT. 
+Per defecte, rsync no elimina res del directori de destinació.
+
+CONCLUSIÓN: SI SE ELIMINA EN LOCAL - CON --DELETE ELIMINA EL DESTINO.
+
+```
+rsync -avP --delete dir1/ dir2
+
+```
+
+#### PRUEBA de ELIMINADO --> AVP
+
+rsync -avP --delete dir1/ dir2
+
+cd ~/dir1
+
+rm file69
+
+cd ..
+
+rsync -avP --delete dir1/ dir2
+
+ osboxes  ~  rsync -avP --delete dir1/ dir2
+sending incremental file list
+deleting file69
+./
+
+
+
+# 7. --exclude --> NO LO INCLUYE EN EL DESTINO!!!
+
+```
+rsync -a --exclude=pattern_to_exclude source destination
+
+```
+
+#### PRUEBA de EXCLUSIÓN --> AVP
+```
+rsync -avP --exclude=file69 dir1/ dir2
+```
+```
+cd dir2
+```
+```
+ osboxes  ~  dir2  ls file69
+ls: cannot access 'file69': No such file or directory
+ osboxes  ~  dir2  2  ls file68
+file68
+ osboxes  ~  dir2  
+```
+#### PRUEBA de EXCLUSIÓN2 + INCLUDE --> AVZP + e ssh
+```
+rsync -avzP -e ssh --include 'file69' --exclude '*' osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/
+
+receiving incremental file list
+./
+file69
+              0 100%    0.00kB/s    0:00:00 (xfr#1, to-chk=0/2)
+
+sent 65 bytes  received 122 bytes  124.67 bytes/sec
+total size is 0  speedup is 0.00
+ osboxes  ~  
+```
+
+
+
+# 7. --include --> LO INCLUYE EN EL DESTINO!!!
+
+```
+
+rsync -avzP --include 'file69' --exclude '*' dir1/ dir2
+
+```
+
+#### PRUEBA de EXCLUSIÓN2 + INCLUDE (POR SSH) --> AVZP + e ssh
+```
+rsync -avzP -e ssh --include 'file69' --exclude '*' osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/
+
+receiving incremental file list
+./
+file69
+              0 100%    0.00kB/s    0:00:00 (xfr#1, to-chk=0/2)
+
+sent 65 bytes  received 122 bytes  124.67 bytes/sec
+total size is 0  speedup is 0.00
+ osboxes  ~  
+```
+
+#### PRUEBA de EXCLUSIÓN2 + INCLUDE (LOCAL-LOCAL) --> ANVZP - CON DRY RUN
+ osboxes  ~  rsync -anvzP --include 'file69' --exclude '*' dir1/ dir2
+sending incremental file list
+./
+file69
+
+sent 93 bytes  received 22 bytes  230.00 bytes/sec
+total size is 0  speedup is 0.00 (DRY RUN)
+ osboxes  ~  
+
+
+
+# 8. – Eliminando archivos en el destino
+
+Si un archivo o directorio no existe en el origen de los datos a 
+transferir, pero sí existe en el destino, es posible que desees eliminarlo en el destino. 
+Para ello usamos la opción «–delete«:
+
+```
+
+[keshi]# rsync -avz --delete osboxes@192.168.0.40:/home/dir1/
+```
+
+#######################################################################################################################
+OTROS EJEMPLOS @KESHI
+#######################################################################################################################
+
+1 – Copiar/sincronizar un archivo o directorio localmente
+
+Con el siguiente comando, copiaremos el archivo «backup.tar.gz» 
+localmente de un directorio a otro distinto, en este caso «/root/backups«. 
+
+Verás que si el directorio de destino no existe, Rsync lo creará automáticamente.
+
+
+```
+[root@proxadmin]# rsync -zvh backup.tar.gz /root/backups/
+
+created directory /root/backups
+backup.tar.gz
+sent 34.71M bytes received 31 bytes 3.27M bytes/sec
+total size is 36.18M speedup is 1.10
+```
+
+Vamos a ver ahora cómo copiar localmente un directorio en lugar de un archivo. 
+El siguiente comando, copiará el directorio «/home/proxadmin» dentro del directorio 
+«/root/backups«.
+
+```
+[root@proxadmin]# rsync -avzh /home/proxadmin /root/backups/
+
+sending incremental file list
+proxadmin/
+proxadmin/archivo1.txt
+proxadmin/archivo2.txt
+proxadmin/archivo3.txt
+sent 8.99K bytes received 3 bytes 3.33M bytes/sec
+total size is 8.99K speedup is 1.00
+```
+#######################################################################################################################
+
+2 – Copiar/sincronizar archivos y directorios remotamente
+
+El siguiente comando copiará el directorio local «/home/proxadmin» al directorio «/home» de un servidor remoto (192.168.0.101).
+
+```
+
+[root@proxadmin]# rsync -avz proxadmin/ root@192.168.0.101:/home/
+root@192.168.0.101's password:
+
+sending incremental file list
+./
+archivo1.txt
+archivo2.txt
+archivo3.txt
+sent 93369 bytes received 91 bytes 9476.80 bytes/sec
+total size is 91313 speedup is 1.00
+
+```
+
+
+KESHI: rsync -anvzh ~/dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/ 
+
+¿Y si lo que queremos es realizar lo mismo a la inversa? Imaginemos que queremos copiar el cotenido del directorio remoto «/home«, en el directorio local «/home/proxadmin«. 
+Entonces este sería nuestro comando:
+
+```
+
+[root@proxadmin]# rsync -avzh root@192.168.0.101:/home/ /home/proxadmin/
+
+```
+
+KESHI: rsync -anvzh osboxes@192.168.0.40:/home/osboxes/dir1/ ~/dir2/
+
+#######################################################################################################################
+
+#######################################################################################################################
+
+3 – Rsync a través de SSH
+
+Rsync nos permite utilizar el protocolo SSH para la transferencia de archivos y directorios, 
+de ese modo  nos aseguraremos de que nuestra conexión será segura y encriptada, 
+de manera que nadie pueda capturar nuestros datos. 
+
+En Rsync, podemos especificar fácilmente el protocolo que deseamos utilizar con la opción «-e» 
+seguida del protocolo que deseamos utilizar. Por ejemplo:
+
+
+El siguiente comando copiará el directorio local «/home/proxadmin» al directorio «/home» de un servidor remoto (192.168.0.101).
+
+```
+
+[root@proxadmin]# rsync -avzhe ssh proxadmin/ root@192.168.0.101:/home/
+
+```
+
+KESHI: rsync -anvzhe ssh dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+
+¿Y si el servidor al que deseamos conectarnos tiene un puerto distinto al puerto por defecto (22)? No hay problema, 
+Rsync nos permite también especificar un puerto:
+
+```
+
+[root@proxadmin]# rsync -avzh -e 'ssh -p <numerodepuerto>' proxadmin/ root@192.168.0.101:/home/
+
+```
+
+KESHI: rsync -anvzhe ssh -p 3094 dir1/ osboxes@192.168.0.40:/home/osboxes/dir2/
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+4 – Mostrar el progreso de la transferencia
+
+Si deseamos poder visualizar el progreso de la transferencia desde un servidor a otro, el siguiente comando, con la opción «–progress» 
+nos mostrará los archivos y el tiempo restante para finalizar la transferencia:
+
+O -P --> PROGRESS
+
+```
+[root@proxadmin]# rsync -avzhe ssh --progress proxadmin/ root@192.168.0.101:/home/
+```
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+5 – Incluir y excluir archivos o directorios
+Las opciones «–include» y «–exclude» nos permiten indicar qué archivos o 
+directorios deseamos incluir y excluir de nuestra transferencia de datos. 
+
+En el siguiente ejemplo, le indicamos a Rsync que incluya sólo los archivos y 
+directorios cuyo nombre comience por «R«, y que excluya el resto de archivos y directorios.
+
+[root@proxadmin]# rsync -avze ssh --include 'R*' --exclude '*' root@192.168.0.101:/var/lib/rpm/ /root/rpm
+root@192.168.0.101's password:
+receiving incremental file list
+created directory /root/rpm
+./
+Requirename
+Requireversion
+sent 67 bytes received 167289 bytes 7438.04 bytes/sec
+total size is 434176 speedup is 2.59
+
+KESHI: 
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+7 – Transferir sólo los archivos con un peso concreto
+
+En ocasiones podemos necesitar copiar/sincronizar sólo los archivos que tengan un peso máximo, esto lo podemos conseguir con la opción «–max-size«. En este ejemplo copiaremos sólo los archivos que tengan como tamaño máximo 400k.
+
+[root@proxadmin]# rsync -avzhe ssh --max-size='400k' proxadmin/ root@192.168.0.101:/home/
+
+#######################################################################################################################
+
+8 – Eliminar automáticamente los archivos en origen tras la transferencia
+
+Vamos a imaginar que tenemos un servidor de hosting donde cada noche 
+se realizan copias de seguridad en local. Para mayor seguridad, 
+queremos copiarlas a un servidor remoto y eliminarlas de local para recuperar espacio 
+en el disco. 
+
+Podemos ordenarle a Rsync que borre automáticamente los backups en el servidor de origen, 
+después de haberlos transferido al servidor remoto, con la opción «–remove-source-files«.
+
+
+[root@proxadmin]# rsync --remove-source-files -zvhe ssh backup.tar.gz root@192.168.0.101:/root/backups/
+backup.tar.gz
+sent 14.71M bytes received 31 bytes 4.20M bytes/sec
+total size is 16.18M speedup is 1.10
+ 
+[root@proxadmin]# ll backup.tar.gz
+ls: backup.tar.gz: No such file or directory
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+9 – Probar un comando Rsync sin realizar ningún cambio ¡¡DRY RUN!!
+
+Si eres nuevo en el uso de Rsync y todavía no sabes muy bien lo 
+que estás haciendo al ejecutar el comando, 
+es posible que cometas un error que copie o sincronice archivos y 
+directorios no deseados, con la consecuente tediosa tarea de eliminarlos después en destino. 
+
+Para evitar esto, tenemos la opción «–dry-run«, 
+que te permite utilizar un comando para ver la salida sin llegar a ejecutar. 
+
+Si el resultado es el deseo, 
+sólo tendrás que volver a ejecutar el mismo comando eliminando la opción «–dry-run«.
+
+[root@proxadmin]# rsync --dry-run --remove-source-files -zvhe ssh backup.tar.gz root@192.168.0.101:/root/backups/
+backup.tar.gz
+sent 35 bytes received 15 bytes 100.00 bytes/sec
+total size is 16.18M speedup is 323584.00 (DRY RUN)
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+10 – Forzar la transferencia completa en lugar de sólo los cambios
+
+Por defecto, Rsync sólo realiza una copia completa de los archivos la primera vez, 
+luego simplemente copia/sincroniza los bloques y 
+bytes que han cambiado desde la sincronización completa. 
+
+Si quermos forzar a que realice una sincronización completa de nuevo, 
+debemos usar la opicón «–W«:
+
+[root@proxadmin]# rsync -zvhWe ssh backup.tar.gz root@192.168.0.101:/root/backups/
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
+
+#######################################################################################################################
+
