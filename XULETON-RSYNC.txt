@@ -794,8 +794,210 @@ debemos usar la opicón «–W«:
 
 #######################################################################################################################
 
+PRACTICA EDUARD
+
+LOCAL - LOCAL - si no existeix el crea
+
+rsync -avP dir1 dir3
+
+LOCAL - REMOT - si no existeix el crea
+
+rsync -avP ./dir1/ guest@i14:/var/tmp/keshi/dir3/
+
+REMOT - LOCAL. NO remot-remot.
+
+	○ remot (:) utilitza ssh. Usa l’algorisme **delta-transfer**.
+
+	○ origen acabat amb la barra (dir/dirnom/) implica el contingut de, acabat sense (dir dir nom) implica el directori i el seu contingut.
+
+rsync -avP guest@i14:/var/tmp/keshi/dir3/ ~/nova_carpeta/
+
+
+● Crea un exemple per observar el funcionament del delta-transfer, per exemple:
+
+○ Observar el tràfic de només la part diferent modificant el número de fitxers.
+
+rsync -avP
+
+○ També exemple modificat un fitxer (.img) de 1G afegint-li “hola”.
+
+dd if=/dev/zero of=disk.img bs=1k count=1000K
+
+echo "HOLA" > disk.img 
+
+rsync -avP disk.img osboxes@192.168.0.40:/var/tmp/keshi/
+
+
+
 
 #######################################################################################################################
+
+RSYNC SERVIDOR @ keshi
+
+#################
+
+CONFIGURACIÓN SERVIDOR RSYNC
+
+1. sudo nano /etc/rsyncd.conf
+
+```                               
+lock file = /var/run/rsync.lock
+log file = /etc/rsyncd.log
+pid file = /var/run/rsyncd.pid
+
+[kpop]
+    path = /home/osboxes/keshi
+    comment = Dance Keshi
+    uid = osboxes
+    gid = osboxes
+    read only = no
+    list = yes
+    auth users = guest,clientrsync
+    secrets file = /etc/rsyncd.secretos
+    hosts allow = 192.168.0.38/255.255.255.0
+    chroot = false
+
+```
+
+2. Generar /etc/rsyncd.secretos
+
+```                             
+clientrsync:password
+juan:password
+respaldo:password
+usuario:password
+guest:guest
+```
+
+3. Cambiar permisos "chmod 600 /etc/rsyncd.secretos"
+
+sudo chmod 600 /etc/rsyncd.secretos
+
+4. Ir a --> 
+
+cd $HOME
+  552  ls -l
+  553  mkdir keshi
+  554  cd keshi
+  555  ls -l
+
+GENERAR LOS FICHEROS
+
+  556  touch file-keshi{1..10}
+
+
+● Genera almenys tres recursos rsync.
+
+touch file-keshi{1..10}
+
+● Configura els recursos uns de rw i altre sde ro.
+
+chmod 444 file-keshi1
+
+chmod 664 file-keshi2
+
+● Configura accés segons usuari.
+
+--
+clientrsync:password
+juan:password
+respaldo:password
+usuario:password
+guest:guest
+--
+
+● Practica l’accés a recursos de servidor rsync:
+
+	○ Llistar tots els recursos disponibles
+	
+--
+
+# DESDE EL OTRO CLIENTE CON GUEST
+
+osboxes@cryptoclient:~$ rsync -avz guest@192.168.0.40::kpop/
+Password: 
+receiving incremental file list
+drwxrwxr-x          4,096 2022/06/07 16:38:49 .
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi1
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi10
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi2
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi3
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi4
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi5
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi6
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi7
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi8
+-rw-rw-r--              0 2022/06/07 16:38:49 file-keshi9
+
+sent 20 bytes  received 186 bytes  13.29 bytes/sec
+total size is 0  speedup is 0.00
+osboxes@cryptoclient:~$ 
+
+
+
+
+# CON CLIENTRSYNC
+
+osboxes@cryptoclient:~$ rsync -avz clientrsync@192.168.0.40::kpop/public
+Password: 
+receiving incremental file list
+drwxrwxr-x          4,096 2022/06/07 16:49:45 public
+-rw-rw-r--              0 2022/06/07 16:48:20 public/.txt
+-rw-rw-r--              0 2022/06/07 16:49:45 public/04:49:45
+-rw-rw-r--              0 2022/06/07 16:49:45 public/07
+-rw-rw-r--              0 2022/06/07 16:49:45 public/2022
+-rw-rw-r--              0 2022/06/07 16:49:45 public/EDT
+-rw-rw-r--              0 2022/06/07 16:49:45 public/Jun
+-rw-rw-r--              0 2022/06/07 16:49:45 public/PM
+-rw-rw-r--              0 2022/06/07 16:49:45 public/Tue
+
+sent 25 bytes  received 197 bytes  2.63 bytes/sec
+total size is 0  speedup is 0.00
+
+
+--
+	○ Llistar el contingut d’un recurs
+
+	
+--
+osboxes@cryptoclient:~$ rsync -avz guest@192.168.0.40::kpop/public
+Password: 
+receiving incremental file list
+drwxrwxr-x          4,096 2022/06/07 16:49:45 public
+-rw-rw-r--              0 2022/06/07 16:48:20 public/.txt
+-rw-rw-r--              0 2022/06/07 16:49:45 public/04:49:45
+-rw-rw-r--              0 2022/06/07 16:49:45 public/07
+-rw-rw-r--              0 2022/06/07 16:49:45 public/2022
+-rw-rw-r--              0 2022/06/07 16:49:45 public/EDT
+-rw-rw-r--              0 2022/06/07 16:49:45 public/Jun
+-rw-rw-r--              0 2022/06/07 16:49:45 public/PM
+-rw-rw-r--              0 2022/06/07 16:49:45 public/Tue
+
+sent 25 bytes  received 197 bytes  15.31 bytes/sec
+total size is 0  speedup is 0.00
+osboxes@cryptoclient:~$ 
+
+
+--
+
+	○ Descarregar contingut d’un recurs
+--
+
+osboxes@cryptoclient:~$ rsync -rtv guest@192.168.0.40::kpop/public/EDT ~/kpop/
+Password: 
+receiving incremental file list
+created directory /home/osboxes/kpop
+EDT
+
+sent 43 bytes  received 83 bytes  9.33 bytes/sec
+total size is 0  speedup is 0.00
+osboxes@cryptoclient:~$ 
+
+--
+
+
+
+
 
 
 #######################################################################################################################
